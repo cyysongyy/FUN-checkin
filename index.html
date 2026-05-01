@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fun Check-in 趣味抽題</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --teal: #1a8a8a;
+      --teal-light: #5ec8c8;
+      --green: #27ae60;
+      --green-dark: #1e8449;
+      --orange: #e67e22;
+      --gold: #f1c40f;
+      --gray: #8e9eb0;
+    }
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background: linear-gradient(145deg, #0f1c2e 0%, #0d4f5c 60%, #112a1e 100%);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+      padding: 24px 16px;
+    }
+    #stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .star {
+      position: absolute; border-radius: 50%; background: #fff;
+      opacity: .3; animation: twinkle var(--d, 3s) ease-in-out infinite;
+    }
+    @keyframes twinkle { 0%,100%{opacity:.1} 50%{opacity:.7} }
+
+    .wrap { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 24px; }
+    header h1 {
+      font-size: clamp(1.7rem, 5vw, 2.4rem);
+      font-weight: 900;
+      background: linear-gradient(120deg, var(--teal-light), var(--gold));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: 1px;
+    }
+    header p { color: var(--gray); font-size: .95rem; margin-top: 6px; }
+
+    .card {
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.13);
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+      padding: 24px;
+      margin-bottom: 16px;
+      animation: fadeUp .5s ease both;
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+
+    label { display:block; font-size:.85rem; color: var(--teal-light); margin-bottom: 8px; font-weight: 600; }
+
+    .cats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+    .cat {
+      padding: 10px 12px; border-radius: 12px;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.15);
+      cursor: pointer; transition: all .2s; font-size: .9rem; text-align: center;
+      user-select: none;
+    }
+    .cat:hover { background: rgba(255,255,255,.12); }
+    .cat.active { background: linear-gradient(135deg, var(--teal), var(--green-dark)); border-color: transparent; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 16px 24px; border: none; border-radius: 14px;
+      font-size: 1.1rem; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: all .25s; width: 100%;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--teal), var(--green)); color: #fff; }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,138,138,.45); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    .question {
+      padding: 28px 22px; border-radius: 18px;
+      background: linear-gradient(135deg, rgba(94,200,200,.15), rgba(241,196,15,.10));
+      border: 1px solid rgba(94,200,200,.35);
+      min-height: 180px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .question .tag {
+      display: inline-block; padding: 4px 12px; border-radius: 999px;
+      background: rgba(241,196,15,.18); color: var(--gold);
+      font-size: .75rem; font-weight: 700; margin-bottom: 12px;
+      align-self: flex-start;
+    }
+    .question .zh {
+      font-size: clamp(1.15rem, 3.2vw, 1.5rem);
+      font-weight: 700; line-height: 1.5; margin-bottom: 10px;
+    }
+    .question .en {
+      font-size: .92rem; color: var(--gray); line-height: 1.55;
+      font-style: italic;
+    }
+    .question.empty {
+      text-align: center; color: var(--gray); justify-content: center;
+    }
+    .question.empty .hint-emoji { font-size: 2rem; margin-bottom: 8px; }
+
+    .footer-info {
+      text-align: center; color: var(--gray); font-size: .8rem; margin-top: 12px;
+    }
+    .footer-info span { color: var(--teal-light); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="stars"></div>
+  <div class="wrap">
+    <header>
+      <h1>✨ Fun Check-in 趣味抽題</h1>
+      <p>用一題輕鬆的問題，開啟今天的對話</p>
+    </header>
+
+    <div class="card">
+      <label>選一個分類</label>
+      <div id="cats" class="cats">
+        <div class="cat active" data-cat="*">🎲 全部</div>
+        <div class="cat" data-cat="A">A. 腦洞大開</div>
+        <div class="cat" data-cat="B">B. 職場真心話</div>
+        <div class="cat" data-cat="C">C. 關係連結</div>
+        <div class="cat" data-cat="D">D. 雙語覺察</div>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <button id="drawBtn" class="btn btn-primary">🎁 抽一題</button>
+      </div>
+
+      <div id="questionBox" class="question empty" style="margin-top: 16px;">
+        <div class="hint-emoji">👆</div>
+        <div>點上面按鈕抽一題開始</div>
+      </div>
+
+      <div class="footer-info">
+        共 <span id="poolCount">100</span> 題可抽 ·
+        已抽 <span id="seenCount">0</span> 題
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const QUESTIONS = [
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果教務處可以開一門「不正經」的課，你想開什麼？",
+    "en": "If the Office of Academic Affairs could offer a 'just-for-fun' class, what would it be?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果明天桌子底下有個秘密傳送門，門外會發生什麼事？",
+    "en": "If a secret portal appeared under your desk tomorrow, what would be happening on the other side?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果可以擁有一種「只能在學校使用」的超能力，會是什麼？",
+    "en": "If you could have a superpower that only works at school, what would it be?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果辦公椅變成時光機，你會想回到哪一年的校園？",
+    "en": "If your office chair turned into a time machine, which year's campus would you visit?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果要把今天的壓力具象化成一種怪獸，牠長什麼樣子？",
+    "en": "If you could visualize today's stress as a monster, what would it look like?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果可以選一個卡通人物當副手，誰最能幫你處理公文？",
+    "en": "If you could pick a cartoon character as your assistant, who would be best at handling paperwork?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果可以和任何一位歷史名人吃午餐,你會問他什麼？",
+    "en": "If you could have lunch with any historical figure, what would you ask them?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果明天學校廣播音樂由你決定，你會放哪首歌？",
+    "en": "If you were in charge of the school's PA system tomorrow, which song would you play?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果可以把一種蔬菜從世界上變不見，你會選誰？",
+    "en": "If you could make one vegetable vanish from the world forever, which one would it be?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果可以瞬間移動到一個旅遊勝地 10 分鐘，你會去哪？",
+    "en": "If you could teleport to a travel destination for just 10 minutes, where would you go?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果可以發明「情緒偵測器」，焦慮時會發出什麼聲音？",
+    "en": "If you invented an 'Emotion Detector,' what sound would it make when it senses anxiety?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果可以設計「防禦抱怨」的盔甲，它有什麼功能？",
+    "en": "If you could design a 'Complaint-Proof' armor, what special features would it have?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果校園裡的樹會說話，你覺得它們最常吐槽誰？",
+    "en": "If the trees on campus could talk, who do you think they would tease the most?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果辦公室有一幅會動的肖像畫，畫裡的你在幹嘛？",
+    "en": "If you had a moving portrait in your office, what would the 'you' in the painting be doing?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果贏得「年度最佳苦勞獎」，你的領獎感言第一句話是什麼?",
+    "en": "If you won the 'Hardest Worker of the Year' award, what would be your opening line?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果飲水機流出「自動完成公文藥水」，它是什麼味道?",
+    "en": "If the water fountain dispensed a 'Paperwork Auto-Complete' potion, what would it taste like?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果你可以把辦公室一件物品當作「座騎」，你選哪件?",
+    "en": "If you could turn one office item into your 'steed,' which one would you choose?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果明天醒來變成校園裡的一隻貓，你第一站去哪巡視?",
+    "en": "If you woke up as a campus cat tomorrow, where is the first place you'd go to inspect?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果外聘一位名人代一堂課，誰的課表讓你最放心？",
+    "en": "If you hired a celebrity to cover one of your classes, whose teaching schedule would make you feel most at ease?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果大腦是瀏覽器，現在分頁開最多的是哪一個分類？",
+    "en": "If your brain were a web browser, which category has the most tabs open right now?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果有「情緒過濾口罩」，能把哪種語氣過濾成讚美?",
+    "en": "If there were 'Emotion Filtering Masks,' which tone of voice would you filter into a compliment?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果穿越到 50 年後的本校，導覽機器人會說什麼?",
+    "en": "If you traveled 50 years into the future of this school, what would the tour robot say?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果擁有一顆「暫停球」能讓全校靜止 5 分鐘，你想做什麼?",
+    "en": "If you had a 'Pause Ball' that froze the whole school for 5 minutes, what would you do?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果影印機變成你的行政助理，它會是什麼性格?",
+    "en": "If the photocopier became your administrative assistant, what would its personality be like?"
+  },
+  {
+    "category": "A. 腦洞大開：時空與超能力 (Creative & Sci-Fi)",
+    "zh": "如果為「教學壓力」設計怪獸卡，其特殊技能是什麼?",
+    "en": "If you designed a monster card for 'Teaching Stress,' what would its special skill be?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果今天可以翹班一整天完全不被發現，你會在哪出現？",
+    "en": "If you could skip work all day without being caught, where would you show up?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果闖禍可以拿一個「荒謬但會被原諒」的藉口，你想用什麼？",
+    "en": "If you could use one 'ridiculous but forgivable' excuse for a mistake, what would it be?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果寵物可以說一天的實話，牠會對你的工作說什麼？",
+    "en": "If your pet could speak the truth for a day, what would it say about your job?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果用一個動作形容你現在的能量水平，那是什麼？",
+    "en": "If you had to use one movement to describe your energy level, what would it be?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果今天下班的獎勵是大餐，那會是哪一道菜？",
+    "en": "If your reward for finishing work today was a feast, which dish would it be?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果工作內容拍成電影，你會選哪位明星演你？",
+    "en": "If your work life were made into a movie, which star would you want to play you?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果可以刪除 Google 日曆一個時段不被發現，你刪哪段？",
+    "en": "If you could delete one time slot from your Google Calendar unnoticed, which would it be?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果可以發明專屬「工作靜音鍵」，你在何時按它？",
+    "en": "If you could invent a personal 'Work Mute Button,' when would you press it?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果你是一台電腦，你的系統更新進度目前是幾 %？",
+    "en": "If you were a computer, what is your system update progress percentage right now?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果文具深夜開會，你覺得訂書機在抱怨什麼？",
+    "en": "If the stationery had a meeting at night, what do you think the stapler would be complaining about?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果可以領取一張「行政免死金牌」，你會用在何時？",
+    "en": "If you could receive one 'Administrative Immunity Card,' when would you use it?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果可以把一種情緒永久封存保險箱，你選哪種？",
+    "en": "If you could lock one emotion in a safe forever, which one would you choose?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果人生是一本自傳，這一個星期的標題叫什麼？",
+    "en": "If your life were an autobiography, what would be the title of this past week?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果跟 20 歲的自己通話，你會提醒他關於教育界的什麼事？",
+    "en": "If you could call your 20-year-old self, what would you warn them about the education world?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果用植物代表今天的心情，你是仙人掌還是含羞草？",
+    "en": "If a plant represented your mood today, would you be a cactus or a mimosa?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果可以獲得一個「絕對有效」的請假理由，那是哪個？",
+    "en": "If you could have one 'absolutely effective' excuse for leave, which one would it be?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果工作壓力是音樂風格，現在是重金屬還是慢靈魂？",
+    "en": "If your work stress were a music style, would it be heavy metal or slow soul?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果改作業可以交換成搬磚頭等體力活，你換嗎？",
+    "en": "If you could swap grading papers for manual labor like moving bricks, would you do it?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果便當會說話，它現在最想安慰你哪一件事？",
+    "en": "If your lunchbox could talk, what is the one thing it would want to comfort you about right now?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果領取「情緒津貼」，你覺得這禮拜該領多少？",
+    "en": "If you were to receive an 'Emotion Subsidy,' how much do you think you deserve this week?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果手機具備讀心術，它會提醒你離誰遠一點？",
+    "en": "If your phone had mind-reading powers, who would it tell you to stay away from?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果刪除一段「最尷尬的公開授課經歷」，那是哪段？",
+    "en": "If you could erase one 'most embarrassing open-class experience,' which one would it be?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果把家事外包給外星人，你會選洗碗還是掃地？",
+    "en": "If you could outsource chores to aliens, would you choose washing dishes or sweeping?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果你是一待機電器，是充電中的掃地機還是過熱微波爐？",
+    "en": "If you were an appliance on standby, would you be a charging robot vacuum or an overheated microwave?"
+  },
+  {
+    "category": "B. 職場真心話：幽默與舒壓 (Work-Life Humor)",
+    "zh": "如果專業能力換成馬戲團特技，你會表演什麼？",
+    "en": "If your professional skills were turned into circus acts, what would you perform?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果可以和任何一個卡通人物當同學，你想選誰？",
+    "en": "If you could be classmates with any cartoon character, who would you choose?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果交換靈魂一天，你想體驗本校哪位同仁的生活？",
+    "en": "If you could swap souls for a day, whose life among our colleagues would you want to experience?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果組成超級英雄戰隊，你的特殊技能是什麼？",
+    "en": "If we formed a superhero team, what would your special skill be?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果送一份「無形但珍貴」的禮物給夥伴，那是什麼？",
+    "en": "If you could give an 'invisible but precious' gift to a colleague, what would it be?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果你是一本圖書館的書，你希望誰來借閱你？",
+    "en": "If you were a library book, who would you want to check you out?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果為隔壁班老師取「能量代號」，那會是什麼？",
+    "en": "If you gave the teacher next door an 'energy code name,' what would it be?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果笑容可以變成一種味道，是甜的、鹹的還是辣的？",
+    "en": "If a smile had a flavor, would it be sweet, salty, or spicy?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果感謝可以變成實體物品，你會想收到什麼？",
+    "en": "If gratitude could become a physical object, what would you want to receive?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果校園野餐，你最想和誰坐在同一張墊子上？",
+    "en": "If we had a campus picnic, who would you most want to sit on the same mat with?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果看見夥伴頭上的「情緒狀態欄」，現在是什麼顏色？",
+    "en": "If you could see the 'emotion status bar' above your partner's head, what color is it right now?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果邀請一位同事去 KTV 唱歌，對唱曲會是哪一首？",
+    "en": "If you invited a colleague to karaoke, what would your duet song be?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果為團隊設計制服，你希望是什麼顏色？",
+    "en": "If you were designing a uniform for our team, what color would you want it to be?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果可以藍芽傳輸「好心情」，你現在想傳給誰？",
+    "en": "If you could 'Bluetooth' a good mood, who would you send it to right now?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果創造一個「團隊秘密手勢」，應該怎麼做？",
+    "en": "If we created a 'team secret gesture,' how should it be done?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果是同事肩膀的小精靈，你會在他疲倦時說什麼？",
+    "en": "If you were a tiny elf on a colleague's shoulder, what would you say when they are tired?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果舉辦「怪癖奧運會」，你覺得你可以拿哪項金牌？",
+    "en": "If we held a 'Quirky Olympics,' which event do you think you'd win gold in?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果交換一項「天賦」，你想從同事那換到什麼？",
+    "en": "If you could swap one 'talent,' what would you want to get from a colleague?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果校長頒發「隱藏技能獎」給你，那會是什麼技能？",
+    "en": "If the principal gave you a 'Hidden Skill Award,' what skill would it be for?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果拍一部「本校日常」喜劇，片名應該叫什麼？",
+    "en": "If we filmed a comedy about 'Our School's Daily Life,' what should the title be?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果為夥伴設計「打氣手勢」，你會怎麼做？",
+    "en": "If you were designing a 'cheering gesture' for a partner, how would you do it?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果邀請一位同事去無人島生存，他負責生火還是抓魚？",
+    "en": "If you invited a colleague to survive on a desert island, would they be in charge of making fire or catching fish?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果社交能量是 Wi-Fi 訊號，現在是滿格還是搜尋中？",
+    "en": "If your social energy were a Wi-Fi signal, is it full bars or still searching?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果感謝是實體味道，現在會議室是什麼味道？",
+    "en": "If gratitude had a physical scent, what does this meeting room smell like right now?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果跟一位同事組「相聲搭檔」，誰負責吐槽你？",
+    "en": "If you formed a 'cross-talk duo' with a colleague, who would be the one to tease you?"
+  },
+  {
+    "category": "C. 關係連結：同儕與社交 (Social Connection)",
+    "zh": "如果為行政團隊選「進場樂」，你會選哪首歌？",
+    "en": "If you chose an 'entrance theme' for the administrative team, which song would it be?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "如果你的能量是氣象預報，現在是晴天還是陰天？",
+    "en": "If your energy today is a weather forecast, is it sunny or cloudy?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "今天早上你達成的一個小確幸是什麼？",
+    "en": "What is one 'small win' you had this morning?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "如果你的人生有一首主題曲，會是哪一首？",
+    "en": "If your life had a theme song, what would it be?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "如果可以當一小時的動物，你會選哪種？",
+    "en": "If you could be an animal for an hour, which one would you choose?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "你在旁邊的同事身上看到什麼「超能力」？",
+    "en": "What is a 'superpower' you see in the colleague sitting next to you?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "如果可以瞬間學會一項新技能，那會是什麼？",
+    "en": "If you could learn a new skill instantly, what would it be?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "這禮拜別人對你說過最暖心的一句話是什麼？",
+    "en": "What is the kindest thing someone has said to you this week?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "如果你今天是個顏色，你會是什麼色調？",
+    "en": "If you were a color today, what shade would you be?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "此時此刻你最感謝的一件事是什麼？",
+    "en": "What is one thing you are grateful for at this moment?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "如果可以設計一個新節日，我們要慶祝什麼？",
+    "en": "If you could design a new holiday, what would we celebrate?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "你現在的內在電池狀態為何？（紅/黃/綠燈）",
+    "en": "What is the 'status' of your mental battery? (Red/Yellow/Green)"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "如果你可以寫信給 2030 年的自己，你會說什麼？",
+    "en": "If you could write a message to your 'Future Self' in 2030, what would it say?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "哪一個字最能描述你今天的目標？",
+    "en": "What is one word that describes your goal for today?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "如果可以用魔法棒改變教室的一件事，那會是什麼？",
+    "en": "If you could change one thing in your classroom with a magic wand, what would it be?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "這所學校的什麼地方讓你感覺「像家一樣」？",
+    "en": "What makes you feel 'at home' in this school?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "如果你的耐心是電池，現在還剩幾 %？",
+    "en": "If your patience today is a battery, what is the percentage left?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "今天你最想從同事口中聽到的一個字是什麼？",
+    "en": "What is the one word you want to hear from your colleagues today?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "如果你今天是個歌名，會是《我會活下去》還是《快樂》？",
+    "en": "If you were a song title today, would it be 'I Will Survive' or 'Happy'?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "這禮拜你在教室裡發現了什麼「隱藏寶藏」？",
+    "en": "What is a 'hidden treasure' you found in your classroom this week?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "如果今天的工作量是一座山，你現在在哪個位置？",
+    "en": "If today's workload is a mountain, where are you on it?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "如果可以和過去的自己擊掌，會是為了什麼理由？",
+    "en": "If you could give a 'High Five' to your past self, for what reason would it be?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "今天通勤路上有什麼讓你微笑的事？",
+    "en": "What is one thing that made you smile during your commute today?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "如果大腦有個「重整鍵」，你今天想按幾次？",
+    "en": "If you had a 'Refresh' button for your brain, how many times would you press it today?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "這個月學生做過最讓你激勵的一件事是什麼？",
+    "en": "What is the most inspiring thing you've seen a student do this month?"
+  },
+  {
+    "category": "D. 雙語與深度覺察 (Bilingual & Reflection)",
+    "zh": "如果教學風格是一種咖啡，你是濃縮咖啡還是拿鐵？",
+    "en": "If your teaching style is a type of coffee, is it an Espresso or a Latte?"
+  }
+];
+
+    const $ = (s, root=document) => root.querySelector(s);
+    const $$ = (s, root=document) => Array.from(root.querySelectorAll(s));
+
+    // 星空背景
+    (function makeStars(){
+      const box = $('#stars');
+      const n = 60;
+      for (let i = 0; i < n; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        const size = Math.random() * 2.5 + 0.5;
+        s.style.width = s.style.height = size + 'px';
+        s.style.left = Math.random() * 100 + '%';
+        s.style.top = Math.random() * 100 + '%';
+        s.style.setProperty('--d', (2 + Math.random() * 4) + 's');
+        s.style.animationDelay = (Math.random() * 4) + 's';
+        box.appendChild(s);
+      }
+    })();
+
+    let currentCat = '*';
+    let lastIndex = -1;
+    let seenCount = 0;
+
+    function poolForCat(cat) {
+      if (cat === '*') return QUESTIONS.map((q, i) => i);
+      return QUESTIONS.map((q, i) => i)
+        .filter(i => (QUESTIONS[i].category || '').startsWith(cat + '.'));
+    }
+
+    function updatePoolCount() {
+      $('#poolCount').textContent = poolForCat(currentCat).length;
+    }
+
+    // 分類切換
+    $$('#cats .cat').forEach(el => {
+      el.addEventListener('click', () => {
+        $$('#cats .cat').forEach(x => x.classList.remove('active'));
+        el.classList.add('active');
+        currentCat = el.dataset.cat;
+        updatePoolCount();
+      });
+    });
+
+    function drawQuestion() {
+      const pool = poolForCat(currentCat);
+      if (!pool.length) return;
+      // 避免連抽兩題相同
+      let idx;
+      let tries = 0;
+      do {
+        idx = pool[Math.floor(Math.random() * pool.length)];
+        tries++;
+      } while (idx === lastIndex && pool.length > 1 && tries < 8);
+      lastIndex = idx;
+      seenCount++;
+      $('#seenCount').textContent = seenCount;
+      renderQuestion(QUESTIONS[idx]);
+    }
+
+    function renderQuestion(q) {
+      const box = $('#questionBox');
+      box.classList.remove('empty');
+      box.innerHTML = `
+        <div class="tag">${escapeHtml(q.category || '')}</div>
+        <div class="zh">${escapeHtml(q.zh || '')}</div>
+        <div class="en">${escapeHtml(q.en || '')}</div>
+      `;
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"\']/g, c => ({
+        '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+      }[c]));
+    }
+
+    $('#drawBtn').addEventListener('click', drawQuestion);
+
+    // 鍵盤快捷鍵：Enter 或 Space 抽題
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        drawQuestion();
+      }
+    });
+
+    updatePoolCount();
+  </script>
+</body>
+</html>
